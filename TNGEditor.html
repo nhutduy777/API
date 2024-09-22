@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monaco Editor với Tab Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/monaco-editor/min/vs/editor/editor.main.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600&display=swap');
+
+        * {
+            padding: 0;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            background-color: rgb(15, 16, 18);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .editor {
+            background-color: rgb(15, 16, 18);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 16px;
+            position: relative;
+            height: 327px;
+            width: 747px;
+        }
+
+        #tabs {
+            display: flex;
+            margin-bottom: 5px;
+            overflow: hidden;
+        }
+
+        .tab {
+            background-color: rgb(24, 25, 29);
+            color: white;
+            padding: 5px 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            margin-right: 5px;
+            font-size: 12px;
+            transition: background-color 0.2s, transform 0.2s;
+            border: 1px solid transparent;
+            line-height: 20px;
+        }
+
+        .tab:hover, .tab.active {
+            background-color: rgba(0, 123, 255, 0.2);
+            border: 1px solid rgba(0, 123, 255, 1);
+        }
+
+        .close-tab {
+            margin-left: auto;
+            cursor: pointer;
+            color: white;
+            font-size: 10px;
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .add-tab {
+            background: transparent;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        #container {
+            height: calc(100% - 40px);
+            width: 100%;
+            background-color: #18191d;
+        }
+
+        .monaco-editor .margin {
+            background-color: rgba(30, 30, 30, 0.7);
+        }
+
+        .monaco-editor .minimap {
+            background-color: rgba(40, 40, 40, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="editor">
+        <div id="tabs">
+            <div class="tab active" onclick="switchTab('MainTab', 'lua');">
+                <div class="tab-content">
+                    MainTab
+                </div>
+                <span class="close-tab" onclick="closeTab(event, 'MainTab');">X</span>
+            </div>
+            <button class="add-tab" onclick="createTab();"><i class="fas fa-plus"></i></button>
+        </div>
+        <div id="container"></div>
+    </div>
+
+    <script src="https://unpkg.com/monaco-editor/min/vs/loader.js"></script>
+    <script>
+        require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor/min/vs' } });
+        let editor;
+        let currentTab = null;
+        const tabs = [];
+        let tabCount = 1;
+
+        function createTab() {
+            tabCount++;
+            const name = `Tab ${tabCount}`;
+            const language = 'lua';
+
+            const tab = document.createElement('div');
+            tab.className = 'tab';
+            tab.innerHTML = `
+                <div class="tab-content">
+                    ${name}
+                </div>
+                <span class="close-tab" onclick="closeTab(event, '${name}');">X</span>`;
+            tab.onclick = () => switchTab(name, language);
+            document.getElementById('tabs').insertBefore(tab, document.querySelector('.add-tab'));
+            tabs.push({ name, content: '', tab, language });
+
+            if (tabs.length === 1) {
+                switchTab(name, language);
+            } else {
+                setBackground();
+            }
+        }
+
+        function closeTab(event, name) {
+            event.stopPropagation();
+            const tabIndex = tabs.findIndex(t => t.name === name);
+            if (tabIndex > -1) {
+                const tab = tabs[tabIndex];
+                if (currentTab === tab.name) {
+                    if (tabIndex > 0) {
+                        switchTab(tabs[tabIndex - 1].name, tabs[tabIndex - 1].language);
+                    } else if (tabs.length > 1) {
+                        switchTab(tabs[tabIndex + 1].name, tabs[tabIndex + 1].language);
+                    } else {
+                        currentTab = null;
+                        editor.setValue('');
+                    }
+                }
+                tab.tab.remove();
+                tabs.splice(tabIndex, 1);
+            }
+        }
+
+        function switchTab(name, language) {
+            if (currentTab) {
+                const prevTab = tabs.find(t => t.name === currentTab);
+                if (prevTab) {
+                    prevTab.content = editor.getValue();
+                }
+            }
+
+            const selectedTab = tabs.find(t => t.name === name);
+            if (selectedTab) {
+                currentTab = name;
+                editor.setValue(selectedTab.content);
+                editor.setModel(monaco.editor.createModel(selectedTab.content, selectedTab.language));
+                tabs.forEach(t => t.tab.classList.remove('active'));
+                selectedTab.tab.classList.add('active');
+                setBackground();
+            }
+        }
+
+        function setBackground() {
+            var mainBack = "url(https://i.imgur.com/SBXlkgB.png)";
+            var verticalBack = "url(https://i.imgur.com/SBXlkgB.png)";
+            
+            var editorBackground = document.getElementsByClassName("lines-content monaco-editor-background")[0];
+            if (editorBackground) {
+                editorBackground.style.backgroundImage = mainBack;
+                editorBackground.style.backgroundRepeat = "repeat";
+                editorBackground.style.backgroundSize = "auto";
+                editorBackground.style.backgroundPosition = "center top";
+            }
+
+            var marginBackground = document.getElementsByClassName("margin")[0];
+            if (marginBackground) {
+                marginBackground.style.backgroundImage = verticalBack;
+                marginBackground.style.backgroundRepeat = "repeat";
+                marginBackground.style.backgroundSize = "auto";
+            }
+        }
+
+        function GetText() {
+            return editor.getValue(); // Trả về nội dung văn bản trong editor
+        }
+        function SetText(content) {
+    if (editor) {
+        editor.setValue(content); // Cập nhật nội dung trong Monaco Editor
+    }
+}
+
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('container'), {
+                value: '',
+                language: 'lua',
+                theme: 'vs-dark',
+                minimap: {
+                    enabled: true
+                }
+            });
+
+            setBackground();
+
+            const mainTab = document.querySelector('.tab.active');
+            tabs.push({ name: 'MainTab', content: '', tab: mainTab, language: 'lua' });
+        });
+    </script>
+</body>
+</html>
