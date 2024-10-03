@@ -215,14 +215,15 @@
         }
 
         function loadTabs() {
-            const savedTabs = JSON.parse(localStorage.getItem('tabsData'));
-            if (savedTabs) {
-                savedTabs.forEach(tab => createTab(tab.name, tab.content, tab.language));
-            } else {
-                // Nếu không có tab nào lưu, tạo tab mặc định
-                createTab('MainTab', '', 'lua');
-            }
-        }
+    const savedTabs = JSON.parse(localStorage.getItem('tabsData'));
+    if (savedTabs && savedTabs.length > 0) {
+        savedTabs.forEach(tab => createTab(tab.name, tab.content, tab.language));
+    } else {
+        // Nếu không có tab nào lưu, tạo tab mặc định
+        createTab('MainTab', '', 'lua');
+    }
+}
+
 
         window.onbeforeunload = () => {
             if (currentTab) {
