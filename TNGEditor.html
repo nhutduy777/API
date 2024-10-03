@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monaco Editor với Tab Control</title>
+    <title>TNG Executor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/monaco-editor/min/vs/editor/editor.main.css">
@@ -102,12 +102,6 @@
 <body>
     <div class="editor">
         <div id="tabs">
-            <div class="tab active" onclick="switchTab('MainTab', 'lua');">
-                <div class="tab-content">
-                    MainTab
-                </div>
-                <span class="close-tab" onclick="closeTab(event, 'MainTab');">X</span>
-            </div>
             <button class="add-tab" onclick="createTab();"><i class="fas fa-plus"></i></button>
         </div>
         <div id="container"></div>
@@ -118,14 +112,12 @@
         require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor/min/vs' } });
         let editor;
         let currentTab = null;
-        const tabs = [];
+        let tabs = [];
         let tabCount = 1;
 
-        function createTab() {
+        function createTab(name = `Tab ${tabCount}`, content = '', language = 'lua') {
             tabCount++;
-            const name = `Tab ${tabCount}`;
-            const language = 'lua';
-
+            
             const tab = document.createElement('div');
             tab.className = 'tab';
             tab.innerHTML = `
@@ -135,13 +127,15 @@
                 <span class="close-tab" onclick="closeTab(event, '${name}');">X</span>`;
             tab.onclick = () => switchTab(name, language);
             document.getElementById('tabs').insertBefore(tab, document.querySelector('.add-tab'));
-            tabs.push({ name, content: '', tab, language });
+            tabs.push({ name, content, tab, language });
 
             if (tabs.length === 1) {
                 switchTab(name, language);
             } else {
                 setBackground();
             }
+
+            saveTabs();
         }
 
         function closeTab(event, name) {
@@ -161,6 +155,7 @@
                 }
                 tab.tab.remove();
                 tabs.splice(tabIndex, 1);
+                saveTabs();
             }
         }
 
@@ -203,14 +198,32 @@
             }
         }
 
-        function GetText() {
-            return editor.getValue(); // Trả về nội dung văn bản trong editor
+        function saveTabs() {
+            const tabsData = tabs.map(tab => ({
+                name: tab.name,
+                content: tab.content,
+                language: tab.language
+            }));
+            localStorage.setItem('tabsData', JSON.stringify(tabsData));
         }
-        function SetText(content) {
-    if (editor) {
-        editor.setValue(content); // Cập nhật nội dung trong Monaco Editor
-    }
-}
+
+        function loadTabs() {
+            const savedTabs = JSON.parse(localStorage.getItem('tabsData'));
+            if (savedTabs) {
+                savedTabs.forEach(tab => createTab(tab.name, tab.content, tab.language));
+            } else {
+                // Nếu không có tab nào lưu, tạo tab mặc định
+                createTab('MainTab', '', 'lua');
+            }
+        }
+
+        window.onbeforeunload = () => {
+            if (currentTab) {
+                const current = tabs.find(t => t.name === currentTab);
+                if (current) current.content = editor.getValue();
+            }
+            saveTabs();
+        };
 
         require(['vs/editor/editor.main'], function() {
             editor = monaco.editor.create(document.getElementById('container'), {
@@ -222,10 +235,7 @@
                 }
             });
 
-            setBackground();
-
-            const mainTab = document.querySelector('.tab.active');
-            tabs.push({ name: 'MainTab', content: '', tab: mainTab, language: 'lua' });
+            loadTabs();
         });
     </script>
 </body>
