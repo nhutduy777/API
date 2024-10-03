@@ -197,16 +197,14 @@
                 marginBackground.style.backgroundSize = "auto";
             }
         }
-
         function GetText() {
             return editor.getValue(); // Trả về nội dung văn bản trong editor
         }
-
         function SetText(content) {
-            if (editor) {
-                editor.setValue(content); // Cập nhật nội dung trong Monaco Editor
-            }
-        }
+    if (editor) {
+        editor.setValue(content); // Cập nhật nội dung trong Monaco Editor
+    }
+}
         function saveTabs() {
             const tabsData = tabs.map(tab => ({
                 name: tab.name,
