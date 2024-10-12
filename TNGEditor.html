@@ -115,13 +115,13 @@
         let tabs = [];
         let tabCount = 1;
 
-        function createTab(name = `Tab ${tabCount}`, content = '', language = 'lua') {
+        function createTab(name = `Tab ${tabCount}`, content = '--Make By TN Gaming', language = 'lua') {
             tabCount++;
             
             const tab = document.createElement('div');
             tab.className = 'tab';
             tab.innerHTML = `
-                <div class="tab-content">
+                <div class="tab-content" ondblclick="editTabName('${name}', this);">
                     ${name}
                 </div>
                 <span class="close-tab" onclick="closeTab(event, '${name}');">X</span>`;
@@ -197,14 +197,51 @@
                 marginBackground.style.backgroundSize = "auto";
             }
         }
+
+        function editTabName(tabName, tabElement) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = tabName;
+            input.style.width = '100px';
+            input.style.backgroundColor = 'transparent'; // Nền trong suốt
+            input.style.border = 'none'; // Bỏ viền
+            input.style.color = 'white'; // Giữ màu chữ trắng
+            input.onblur = () => {
+                const newName = input.value;
+                tabElement.innerHTML = newName;
+                updateTabName(tabName, newName);
+            };
+            input.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    const newName = input.value;
+                    tabElement.innerHTML = newName;
+                    updateTabName(tabName, newName);
+                }
+            };
+            tabElement.innerHTML = ''; // Xóa nội dung tab
+            tabElement.appendChild(input);
+            input.focus();
+        }
+
+        function updateTabName(oldName, newName) {
+            const tabIndex = tabs.findIndex(t => t.name === oldName);
+            if (tabIndex > -1) {
+                tabs[tabIndex].name = newName;
+                tabs[tabIndex].tab.onclick = () => switchTab(newName, tabs[tabIndex].language); // Cập nhật sự kiện onclick cho tab
+            }
+            saveTabs();
+        }
+
         function GetText() {
             return editor.getValue(); // Trả về nội dung văn bản trong editor
         }
+
         function SetText(content) {
-    if (editor) {
-        editor.setValue(content); // Cập nhật nội dung trong Monaco Editor
-    }
-}
+            if (editor) {
+                editor.setValue(content); // Cập nhật nội dung trong Monaco Editor
+            }
+        }
+
         function saveTabs() {
             const tabsData = tabs.map(tab => ({
                 name: tab.name,
@@ -215,32 +252,22 @@
         }
 
         function loadTabs() {
-    const savedTabs = JSON.parse(localStorage.getItem('tabsData'));
-    if (savedTabs && savedTabs.length > 0) {
-        savedTabs.forEach(tab => createTab(tab.name, tab.content, tab.language));
-    } else {
-        // Nếu không có tab nào lưu, tạo tab mặc định
-        createTab('MainTab', '', 'lua');
-    }
-}
-
-
-        window.onbeforeunload = () => {
-            if (currentTab) {
-                const current = tabs.find(t => t.name === currentTab);
-                if (current) current.content = editor.getValue();
+            const savedTabs = JSON.parse(localStorage.getItem('tabsData'));
+            if (savedTabs && savedTabs.length > 0) {
+                savedTabs.forEach(tab => createTab(tab.name, tab.content, tab.language));
+            } else {
+                createTab(); // Tạo tab mặc định nếu không có tab nào được lưu
             }
-            saveTabs();
-        };
+        }
 
         require(['vs/editor/editor.main'], function() {
             editor = monaco.editor.create(document.getElementById('container'), {
                 value: '',
                 language: 'lua',
+                automaticLayout: true,
                 theme: 'vs-dark',
-                minimap: {
-                    enabled: true
-                }
+                fontSize: 12,
+                lineNumbers: 'on',
             });
 
             loadTabs();
