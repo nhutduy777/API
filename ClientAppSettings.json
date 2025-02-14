@@ -22,7 +22,7 @@
   "DFIntConnectionMTUSize": "900",
   "FFlagDebugDisableTelemetryEphemeralCounter": "True",
   "FIntFRMMinGrassDistance": "0",
-  "FFlagDebugSkyGray": "True",
+  "FFlagDebugSkyGray": "False",
   "DFFlagTextureQualityOverrideEnabled": "True",
   "FIntFRMMaxGrassDistance": "0",
   "DFIntTextureQualityOverride": "3",
